@@ -1,0 +1,351 @@
+--1a--
+select d.department_name, j.job_title, round(avg(e.salary))
+from departments d
+join employees e on e.department_id = d.department_id
+join jobs j on j.job_id = e.job_id
+group by rollup(d.department_name, j.job_title)
+
+--1b--
+select d.department_name, j.job_title, round(AVG(e.salary)), grouping(d.department_name), grouping(j.job_title)
+from departments d
+join employees e ON e.department_id = d.department_id
+join jobs j ON j.job_id = e.job_id
+group by rollup(d.department_name, j.job_title);
+
+
+--2a--
+select d.department_name, j.job_title, round(avg(e.salary))
+from departments d
+join employees e ON e.department_id = d.department_id
+join jobs j ON j.job_id = e.job_id
+group by cube(d.department_name, j.job_title);
+
+--2b--
+select d.department_name, j.job_title, round(avg(e.salary)), decode(grouping(d.department_name),0,'Dep',1,null),decode(grouping(j.job_title),0,'Job',1,null)
+from departments d
+join employees e ON e.department_id = d.department_id
+join jobs j ON j.job_id = e.job_id
+group by cube(d.department_name, j.job_title);
+
+
+--3--
+select d.department_name as "nume_dep", j.job_title as "titlu_job", e.manager_id, max(e.salary) as "sal_max", sum(e.salary) as "sum_sal"
+from departments d
+join employees e ON e.department_id = d.department_id
+join jobs j ON j.job_id = e.job_id
+group by grouping sets((d.department_name, j.job_title), (j.job_title, e.manager_id), ())
+ORDER BY d.department_name;
+
+--4--
+select max(e.salary) as "salariu maxim"
+from employees e
+having max(e.salary) > 15000;
+
+--5a--
+select e.last_name, e.first_name, e.salary, e.department_id
+from employees e
+where e.salary > (select avg(f.salary) 
+from employees f 
+where f.employee_id <> e.employee_id 
+and e.department_id = f.department_id)
+order by e.department_id;
+
+
+select e.last_name,
+e.first_name,
+e.salary,
+d.department_name, "medie","nr_ang"
+from employees e
+join departments d ON d.department_id = e.department_id
+join (select department_id as "Department_id",
+      round(avg(f.salary)) as "medie",
+      count(f.employee_id) as "nr_ang" 
+      from employees f
+      group by f.department_id)
+       on "Department_id" = e.department_id
+where e.salary > (select round(avg(f.salary)) 
+                  from employees f
+                  where f.employee_id <> e.employee_id 
+                  and e.department_id = f.department_id)
+order by e.department_id;
+
+
+--6--
+select e.first_name, e.last_name, e.salary
+from employees e
+where e.salary > (select max(round(avg(f.salary)))
+ from employees f 
+group by f.department_id);
+
+select e.first_name, e.last_name, e.salary
+from employees e
+where e.salary > all(select round(avg(f.salary)) 
+from employees f
+group by f.department_id);
+
+
+--7--
+select e.last_name, e.first_name, e.salary, e.department_id
+from employees e
+where e.salary = (select min(f.salary) 
+from employees f
+ where e.department_id = f.department_id);
+
+
+select employee_id, first_name, salary
+from employees 
+where (department_id, salary) IN 
+(select e.department_id, MIN(e.salary)
+from employees e
+group by e.department_id);
+
+select e.employee_id, e.first_name, e.salary
+from employees e
+join (select f.department_id as Dep_id,
+ min(f.salary) AS Minim 
+ FROM employees f
+  GROUP BY f.department_id) ON Dep_id = e.department_id
+where e.salary = Minim;
+
+
+--8--
+select e.department_id, e.first_name, d.department_name
+from employees e 
+join departments d ON d.department_id = e.department_id
+where e.hire_date <=
+ all(select f.hire_date
+  from employees f
+   where e.department_id = f.department_id)
+order by d.department_name; 
+
+--9--
+select e.last_name, e.salary, e.department_id
+from employees e
+where (select count(f.employee_id) 
+from employees f 
+where e.department_id = f.department_id
+ and f.salary =(select max(h.salary) 
+ from employees h
+ where h.department_id = 30)) >= 1;
+
+
+select e.last_name, e.salary, e.department_id
+from employees e
+where exists(select f.employee_id 
+            from employees f
+             where e.department_id = f.department_id 
+             and f.salary =(select max(h.salary) 
+                            from employees h
+                             where h.department_id = 30));
+
+select e.last_name, e.salary, e.department_id
+from employees e
+where exists(select f.employee_id 
+            from employees f
+             where e.department_id = f.department_id 
+             and f.salary in (select max(h.salary) 
+                            from employees h
+                             where h.department_id = 30));
+
+--10--
+select "nume", "prenume", "salariu"
+from
+(select e.last_name as "nume",
+ e.first_name as "prenume", 
+ e.salary as "salariu"
+FROM employees e
+where rownum < 4
+order by e.salary DESC)
+order by "salariu"
+
+--11--
+select e.employee_id, e.first_name, e.last_name
+from employees e
+where 2 <= (select count(*)
+           from employees f
+            where e.employee_id = f.manager_id);
+
+
+--12--
+select distinct l.city
+from locations l
+join departments d ON d.location_id = l.location_id
+where (select count(*)
+ from departments d1 
+ where d1.location_id = l.location_id and d1.department_id IS NOT NULL) >= 1
+
+select l.city
+from locations l
+where l.location_id IN (select d.location_id from departments d);
+
+select distinct d.location_id
+from departments d
+
+select l.city
+from locations l
+where exists(select d.location_id from departments d where d.location_id = l.location_id)
+
+--13--
+select distinct d.department_id
+from departments d
+where not exists(select f.employee_id 
+from employees f 
+where d.department_id = f.department_id);
+
+
+--14
+--a
+select e.employee_id,  e.first_name, e.last_name, e.hire_date, e.salary, e.manager_id, LEVEL
+from employees e
+where Level = 2
+start with lower(e.last_name) = 'de haan'
+connect by prior e.employee_id = e.manager_id
+
+
+
+--b
+select e.employee_id,  e.first_name, e.last_name, e.hire_date, e.salary, e.manager_id, LEVEL
+from employees e
+where level > 1
+start with lower(e.last_name) = 'de haan'
+connect by prior e.employee_id = e.manager_id
+
+
+--15
+select e.employee_id, e.first_name, e.last_name,e.manager_id, LEVEL
+from employees e
+start with e.employee_id = 114
+connect by prior  e.employee_id = e.manager_id
+
+--16
+select e.employee_id, e.last_name, e.first_name, e.manager_id, LEVEL
+from employees e
+where level>2
+start with lower(e.last_name) = 'de haan'
+connect by prior e.employee_id = e.manager_id
+
+
+--17
+select distinct prior e.employee_id as "codul_angajatului",prior e.last_name as "numele angajatului",  e.employee_id as "codul managerului", e.last_name as "numele managerului", e.manager_id as "codul managerului-managerului", LEVEL
+from employees e
+connect by e.employee_id = prior e.manager_id
+order by "codul_angajatului"
+
+--18
+select e.employee_id, e.last_name, e.first_name, e.salary, e.manager_id
+from employees e
+where e.salary > 5000
+start with e.salary = (select MAX(salary)
+            from employees)
+connect by prior e.employee_id = e.manager_id
+
+
+--salariul managerului este >15000 OBS
+
+select e.employee_id, e.last_name, e.first_name, e.salary, e.manager_id
+from employees e
+where e.salary > 5000 and prior e.salary > 15000
+start with e.salary = (select MAX(salary)
+            from employees)
+connect by prior e.employee_id = e.manager_id
+
+
+--19
+with deps_suma as(select e.department_id, sum(e.salary) as "suma"
+                    from employees e
+                    group by e.department_id
+                    order by 1),
+        total as (select department_id, "suma"
+                    from deps_suma
+                    where "suma" > (select avg("suma") 
+                                    from deps_suma)
+                    )
+select d.department_name, "suma"
+from departments d
+join total t on t.department_id = d.department_id
+
+--20
+with angajat_data as( select e.employee_id, e.hire_date
+                    from employees e
+                    where e.manager_id = (select f.employee_id 
+                                            from employees f
+                                            where lower(f.first_name) = 'steven' and lower(f.last_name) = 'king')
+                    ),
+    vechime as( select f.employee_id
+                from angajat_data f
+                where f.hire_date = (select min(h.hire_date)
+                                    from angajat_data h)
+                )
+select e.employee_id as "cod angajat",
+e.first_name || ' ' || e.last_name as "nume si prenume",
+e.job_id as "id job",
+e.hire_date as "data angajare",
+LEVEL
+from employees e
+where to_char(e.hire_date,'yy') <> 70
+start with e.employee_id in (select employee_id 
+                            from vechime)
+connect by prior e.employee_id = e.manager_id
+order by level
+                
+
+
+--21
+select employee_id,last_name, first_name, salary
+from( select f.employee_id,f.first_name, f.last_name, f.salary
+from employees f
+order by f.salary desc)
+where rownum < 11
+
+
+--22
+select "id job", "medie"
+from (select e.job_id as "id job", avg(e.salary) as "medie"
+    from employees e
+    group by job_id
+    order by avg(e.salary)
+    )
+where rownum < 4
+
+
+
+--23
+select 'Departamentul ' || d.department_name || ' este condus de ' ||nvl(to_char(d.manager_id), 'nimeni')
+|| ' si ' || decode(count(e.employee_id),0, ' nu are angajati', ' are '|| count(e.employee_id) || ' angajati')
+from employees e
+right join departments d on d.department_id = e.department_id
+group by d.department_name, d.manager_id
+order by count(e.employee_id)
+
+--24
+select e.last_name, e.first_name, nullif(length(e.last_name), length(e.first_name)) as "lungime_nume"
+from employees e
+where nullif(length(e.last_name), length(e.first_name)) is not NULL
+
+
+--25
+select e.last_name, e.first_name, e.hire_date, e.salary, 
+decode(to_char(e.hire_date, 'yyyy'), 1989, e.salary + 20/100*e.salary, 1990, e.salary + 15/100*e.salary,1991, e.salary + 10/100*e.salary, e.salary) as "marire"
+from employees e
+order by e.hire_date
+
+--26
+with tabel as(
+select e.job_id, sum(e.salary) as "suma_sal", avg(e.salary) as "medie_salarii", min(e.salary) as "salariu_minim", max(e.salary) as "salariu_maxim"
+from employees e
+group by e.job_id
+)
+select job_id,
+case when e.job_id LIKE 'S%' then "suma_sal"
+    when e.job_id = (select f.job_id
+                    from tabel f
+                    where "salariu_maxim" = (select max("salariu_maxim") from tabel h))
+                    then(select round(avg(f.salary)) from employees f)
+        else "salariu_minim"
+end "rezultate"
+from tabel e
+order by e.job_id
+
+
+--nu se poate afce cu decode deoarece la decode trebuie ac expresia sa fie unica
+--in cazul de fata, trebuie evaluata intai prima litera a jobulu, apoi trebuie calculat salariul maxim etc

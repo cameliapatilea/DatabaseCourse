@@ -1,0 +1,36 @@
+5)
+SELECT employee_id,first_name,job_id,hire_date FROM employees;
+
+6)
+SELECT DISTINCT job_id FROM employees;
+
+7)desc employees
+SELECT last_name ||' '||first_name||','|| job_id "Angajat si titlu" FROM employees
+
+9)
+desc employees
+SELECT last_name,salary FROM employees WHERE salary >2850
+
+12)
+desc employees
+SELECT last_name, job_id, hire_date FROM employees WHERE hire_date between '20-FEB-1987' and '1-MAY-1989' ORDER BY hire_date
+
+13)
+desc employees
+SELECT last_name, department_id FROM employees WHERE department_id IN (10,30,15) ORDER BY last_name
+
+14)
+desc employees
+SELECT last_name "Angajat", salary "Salariu" FROM employees WHERE salary > 3500 AND department_id IN(10,30)
+
+15)
+SELECT SYSDATE FROM employees
+
+18)
+desc employees
+SELECT last_name, salary, commission_pct FROM employees WHERE commission_pct IS NOT NULL ORDER BY salary desc, commission_pct desc
+
+23)
+
+desc employees
+SELECT last_name, salary, commission_pct FROM employees WHERE salary > salary * commission_pct * 5

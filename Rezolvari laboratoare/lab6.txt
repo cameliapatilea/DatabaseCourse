@@ -1,0 +1,192 @@
+
+-----proietele demarate in primele 6 luni ale lui 2006 si angajatii care participa a ele
+select e.employee_id, e.first_name, e.last_name, p.project_id, w.start_date
+from employees e
+join works_on w on e.employee_id = w.employee_id
+join project p on p.project_id = w.project_id
+where p.start_date > to_date('01-01-2006','dd-mm-yyyy') and p.start_date<to_date('30-06-2006','dd-mm-yyyy')
+
+
+--ex1 - Count
+select  e.employee_id, e.last_name, e.first_name, w.project_id, w.start_date
+from employees e
+join works_on w on w.employee_id = e.employee_id
+where (
+        select count(*)
+        from works_on w1 
+         join project p on p.project_id = w1.project_id
+         where w1.employee_id = w.employee_id and
+         p.start_date > to_date('01-01-2006','dd-mm-yyyy') 
+         and p.start_date<to_date('30-06-2006','dd-mm-yyyy')) =
+          ( select count(*)
+            from project p
+             where p.start_date > to_date('01-01-2006','dd-mm-yyyy') 
+            and p.start_date<to_date('30-06-2006','dd-mm-yyyy')
+         )
+         
+--ex 1 - NotExists
+
+select e.employee_id,  e.last_name, e.first_name, w.project_id, w.start_date
+from employees e
+join works_on w on w.employee_id = e.employee_id
+where not exists ( select p.project_id
+                    from project p
+                    where p.start_date> to_date('01-01-2006','dd-mm-yyyy') 
+            and p.start_date<to_date('30-06-2006','dd-mm-yyyy')
+            and not exists(
+                            select e1.employee_id
+                            from works_on e1
+                            where e1.project_id = p.project_id and
+                            e1.employee_id = e.employee_id))
+                            
+--ex1 - minus
+
+
+--2b
+select e.employee_id, e1.first_name, e.project_id
+from works_on e
+join employees e1 on e1.employee_id = e.employee_id
+where not exists( (select w.project_id 
+                from works_on w
+                where w.employee_id = e.employee_id)
+                minus
+                (select v.project_id
+                from works_on v
+                where v.employee_id = 200))
+                
+select distinct e.employee_id, e1.first_name--, e.project_id
+from works_on e
+join employees e1 on e1.employee_id = e.employee_id
+where not exists( (select w.project_id 
+                from works_on w
+                where w.employee_id = e.employee_id)
+                minus
+                (select v.project_id
+                from works_on v
+                where v.employee_id = 200))
+                
+--2a
+select e.employee_id, e1.first_name, e.project_id
+from works_on e
+join employees e1 on e1.employee_id = e.employee_id
+where not exists( 
+                (select v.project_id
+                from works_on v
+                where v.employee_id = 200)
+                minus
+                (select w.project_id 
+                from works_on w
+                where w.employee_id = e.employee_id))
+                
+select distinct e.employee_id, e1.first_name--, e.project_id
+from works_on e
+join employees e1 on e1.employee_id = e.employee_id
+where not exists( 
+                (select v.project_id
+                from works_on v
+                where v.employee_id = 200)
+                minus
+                (select w.project_id 
+                from works_on w
+                where w.employee_id = e.employee_id))
+                
+--2c
+select distinct e.employee_id
+from works_on e
+where not exists(
+                (select w.project_id 
+                from works_on w
+                where w.employee_id = e.employee_id)
+                minus
+                (select v.project_id
+                from works_on v
+                where v.employee_id = 200)) 
+                and
+        not exists
+        ((select v.project_id
+         from works_on v
+         where v.employee_id = 200)
+          minus
+         (select w.project_id 
+         from works_on w
+         where w.employee_id = e.employee_id))
+
+--3
+select count(e.employee_id), c.country_name
+from employees e
+join departments d on d.department_id = e.department_id
+join locations l on l.location_id = d.location_id
+right join countries c on c.country_id = l.country_id
+group by c.country_name
+order by count(e.employee_id) desc
+
+--4
+select e.employee_id, e.last_name, e.first_name
+from employees e
+where exists(select p.project_manager
+            from project p
+            join employees on employee_id = p.project_manager
+            where department_id = e.department_id)
+
+--5
+select  w.employee_id, e.last_name, e.first_name
+from employees e
+join works_on w on e.employee_id = w.employee_id
+where not exists( 
+            (select w1.project_id
+            from works_on w1
+            where w1.employee_id = w.employee_id)
+            minus
+            (select p.project_id
+            from project p
+            where p.project_manager = 102))
+            
+
+ select distinct w.employee_id, e.last_name, e.first_name
+from employees e
+join works_on w on e.employee_id = w.employee_id
+where not exists( 
+            (select w1.project_id
+            from works_on w1
+            where w1.employee_id = w.employee_id)
+            minus
+            (select p.project_id
+            from project p
+            where p.project_manager = 102))     
+
+
+--7
+select e.employee_id, e.first_name, e.last_name, e.department_id, e.salary * 12
+from employees e
+where e.job_id like '&job'
+
+--8
+select e.employee_id, e.first_name, e.last_name, e.department_id, e.salary * 12, e.hire_date
+from employees e
+where e.hire_date > TO_DATE('&data_input', 'DD/MM/YYYY')
+
+--9
+
+select &&p_coloana
+from &p_tabel
+where &p_where
+order by &p_coloana;
+undefine p_coloana
+undefine p_table
+undefine p_where
+
+--10
+select e.employee_id, e.first_name, e.last_name, e.job_id, d.department_name
+from employees e
+join departments d on d.department_id = e.department_id
+join locations l on l.location_id = d.location_id
+where l.city like '&input_oras'
+
+
+--11
+
+accept prima_data PROMPT 'Prima data'
+accept a_doua_data PROMPT 'A doua data'
+SELECT TO_DATE('&prima_data', 'DD/MM/YYYY') - 1 + rownum AS d
+FROM all_objects
+WHERE TO_DATE('&prima_data', 'DD/MM/YYYY') - 1 + rownum <= TO_DATE('&a_doua_data', 'DD/MM/YYYY')          

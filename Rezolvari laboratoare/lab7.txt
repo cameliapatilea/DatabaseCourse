@@ -1,0 +1,144 @@
+alter table dep_pnu
+add constraint pk_dep_pnu primary key(department_id)
+
+alter table emp_pnu
+add constraint fk_emp_dep_pnu
+foreign key(department_id) references dep_pnu(department_id)
+
+--ex 5
+INSERT INTO DEP_pnu (department_id, department_name)
+ VALUES (300, 'Programare')
+ ---nu merge sa fie rulat de 2 ori deoarece id-ul este unic
+ rollback
+ 
+ --6
+ insert into emp_pnu(employee_id, first_name,last_name, email, phone_number,hire_date, job_id, salary, commission_pct,manager_id, department_id)
+ values(250, 'Prenume', 'Popa','p@popa.com', null, '21-JUN-2010',12, null,null,null,300)
+ commit
+ 
+ --7
+ INSERT INTO emp_pnu (employee_id, last_name, email, hire_date, job_id, salary,
+ commission_pct)
+VALUES (252, 'Nume252', 'nume252@emp.com',SYSDATE, 'SA_REP', 5000, NULL);
+SELECT employee_id, last_name, email, hire_date, job_id, salary, commission_pct
+FROM emp_pnu
+WHERE employee_id=252;
+
+ROLLBACK;
+
+
+INSERT INTO
+ (SELECT employee_id, last_name, email, hire_date, job_id, salary,
+ commission_pct
+ FROM emp_pnu)
+VALUES (252, 'Nume252', 'nume252@emp.com',SYSDATE, 'SA_REP', 5000, NULL);
+
+rollback
+
+--exercitiu 7
+INSERT INTO
+ (SELECT employee_id, last_name, email, hire_date, job_id, salary,
+ commission_pct
+ FROM emp_pnu)
+VALUES ((select max(employee_id) from emp_pnu) + 1, 'Nume253', 'nume253@emp.com',SYSDATE, 'SA_REP', 5000, NULL);
+
+--8
+create table emp1_pnu as select * from employees 
+where 1=2
+
+insert into emp1_pnu
+select *
+from employees
+where commission_pct * salary >= salary *0.25
+rollback
+
+--9
+--a
+create table emp0_pnu as select * from employees 
+where 1=2
+
+insert into emp0_pnu
+select *
+from employees
+where department_id = 80
+
+--b
+create table emp1_pnu as select * from employees 
+where 1=2
+
+insert into emp1_pnu
+select *
+from employees
+where salary < 5000 and department_id <>80
+
+--c
+create table emp2_pnu as select * from employees 
+where 1=2
+
+insert into emp2_pnu
+select *
+from employees
+where salary > 5000 and salary < 10000 and department_id <>80
+
+
+--d
+create table emp3_pnu as select * from employees 
+where 1=2
+
+insert into emp3_pnu
+select *
+from employees
+where  salary > 10000 and department_id <>80
+
+insert into emp3_pnu
+select e.*
+from employees e
+left join emp0_pnu emp on emp.employee_id = e.employee_id
+where  e.salary > 10000 and emp.employee_id is null
+
+rollback
+
+commit
+--10
+update emp_pnu
+set salary = 1.05 * salary
+
+rollback
+
+--11
+select employee_id
+from emp_pnu
+where first_name like 'Douglas' and last_name like 'Grant'
+
+update emp_pnu
+set salary = salary + 1000
+where employee_id = 199
+
+update emp_pnu
+set manager_id = 199 
+where department_id = 20
+
+
+
+update dep_pnu
+set  manager_id = (select employee_id from emp_pnu where last_name like 'Grant' and first_name like 'Douglas')
+where department_id = 20;
+
+update emp_pnu
+set salary = salary + 1000
+where employee_id = (select employee_id from emp_pnu where lower(last_name) = 'grant' and lower(first_name) = 'douglas');
+
+--12
+update emp_pnu e
+set (salary, commission_pct) = 
+	(select salary, commission_pct from emp_pnu
+	 where employee_id = e.manager_id)
+where salary = (select min(e.salary) from emp_pnu);
+
+
+--13
+update emp_pnu
+set (job_id, department_id) = 
+(select job_id, department_id from emp_pnu
+                               where employee_id = 205)
+where employee_id = 114;
