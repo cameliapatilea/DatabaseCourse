@@ -1,0 +1,129 @@
+--ex1
+
+create table angajati_cpa
+( cod_ang number(4),
+  nume varchar2(20),
+   prenume varchar2(20),
+   email char(15),
+   data_ang date,
+   job varchar2(10),
+   cod_sef number(4),
+   salariu number(8,2),
+   cod_dept number(2));
+   
+desc angajati_cpa
+
+drop table angajati_cpa
+
+create table angajati_cpa
+( cod_ang number(4) primary key,
+  nume varchar2(20),
+   prenume varchar2(20),
+   email char(15),
+   data_ang date,
+   job varchar2(10),
+   cod_sef number(4),
+   salariu number(8,2) not null,
+   cod_dept number(2));
+   
+--ex 2
+   
+insert into angajati_cpa (cod_ang,nume,prenume,email,data_ang,job,cod_sef,salariu,cod_dept)
+values ( 100, 'nume1','prenume1',null,null,'director',null,20000,10);
+
+insert into angajati_cpa (cod_ang,nume,prenume,email,data_ang,job,cod_sef,salariu,cod_dept)
+values ( 101, 'nume2','prenume2','nume2',to_date('02-02-2004','dd-mm-yyyy'),'inginer',100,10000,10);
+
+insert into angajati_cpa (cod_ang,nume,prenume,email,data_ang,job,cod_sef,salariu,cod_dept)
+values ( 102, 'nume3','prenume3','nume3',to_date('05-06-2000','dd-mm-yyyy'),'analist',101,5000,20);
+
+
+insert into angajati_cpa (cod_ang,nume,prenume,email,data_ang,job,cod_sef,salariu,cod_dept)
+values ( 103, 'nume4','prenume4',null,null,'inginer',100,9000,20);
+
+insert into angajati_cpa (cod_ang,nume,prenume,email,data_ang,job,cod_sef,salariu,cod_dept)
+values ( 104, 'nume5','prenume5','Nume5',null,'analist',101,3000,30);
+
+commit
+
+--ex 3
+create table angajati10_cpa
+as select * from angajati_cpa
+where cod_dept=10;
+commit
+
+desc angajati10_cpa -- nu are constrangeri, cod_ang poate fi null
+desc angajati_cpa
+
+--ex 4
+alter table angajati_cpa
+add (comision number(4,2));
+
+--ex 6
+alter table angajati_cpa
+modify (salariu number ( 8,2 ) default 5000);
+
+--ex7
+alter table angajati_cpa
+modify (comision number (2,2),salariu number ( 10,2 ));
+
+--ex 8
+update angajati_cpa
+set comision = 0.1
+where lower(job) like 'a%'
+
+--ex 9
+alter table angajati_cpa
+modify (email varchar2(15))
+
+-- ex 10
+alter table angajati_cpa
+add(nr_telefon varchar2(10) default '123456789')
+
+--ex 11
+alter table  angajati_cpa
+drop column nr_telefon 
+rollback
+--rollback nu are niciun rost pt ca am facut drop la coloana
+commit
+
+--ex 12
+rename angajati_cpa to angajati3_cpa
+
+--ex 13
+select *from tab;
+rename angajati3_cpa to angajati_cpa
+
+
+--ex 14
+desc angajati10_cpa
+truncate table angajati10_cpa
+
+-- ex 15
+create table departamente_cpa
+( cod_dep number(2),-- constraint dk_cod_dep primary key,
+  nume varchar2(15) constraint nue_not_null not null,
+  cod_director number(4));
+  
+  commit
+  desc departamente_cpa
+
+--ex 16
+insert into departamente_cpa
+values(10,'Administrativ',100);
+insert into departamente_cpa
+ values(20,'Proiectare',101);
+ insert into departamente_cpa
+ values(30,'Programare',null);
+ 
+ --ex 17
+ drop table departamente_cpa
+ alter table departamente_cpa
+ add constraint pk_cod_dep primary key(cod_dep);
+ 
+ --ex 18
+ alter table angajati_cpa
+ add constraint fk_cod_dept foreign key (cod_dept)
+ references departamente_cpa(cod_dep);
+ 
+ rollback

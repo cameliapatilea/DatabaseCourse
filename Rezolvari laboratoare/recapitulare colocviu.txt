@@ -1,0 +1,64 @@
+--1a
+select e.last_name ||' '|| e.first_name, e.salary, d.department_name,  c.country_name
+from employees e
+left join departments d on d.department_id = e.department_id
+left join locations l on l.location_id = d.location_id
+left join countries c on c.country_id = l.country_id
+where lower(e.first_name) like 'k%'
+
+--1b
+select d.department_id, c.country_name, e.first_name ||' '||e.last_name
+from departments d
+left join employees e on e.employee_id = d.manager_id
+left join locations l on l.location_id = d.location_id
+left join countries c on c.country_id = l.country_id
+
+
+--1c
+select e.last_name, e.hire_date, j.job_title
+from employees e
+left join jobs j on j.job_id = e.job_id
+where e.hire_date >= (select f.hire_date
+                    from employees f
+                    where lower(f.last_name) like 'gates' and f.employee_id <> e.employee_id)
+                    
+with gates as (select f.hire_date  hd
+                    from employees f
+                    where lower(f.last_name) like 'gates'  )
+
+ select e.last_name, e.hire_date, j.job_title
+from gates, employees e
+left join jobs j on j.job_id = e.job_id
+where e.hire_date >= gates.hd                   
+--1d
+select d.department_id, d.department_name, e.first_name, e.job_id, to_char(e.salary, '$99,999.000')
+
+
+
+--1f
+select e.first_name, e.department_id, e.salary, e.job_id
+from employees e
+where (e.salary, e.commission_pct) in (select f.salary, f.commission_pct
+from employees f
+join departments d on d.department_id = f.department_id
+join locations l on l.location_id = d.location_id
+where lower(l.city) like 'oxford')
+
+--2a
+select count(count(*))
+from employees
+group by department_id
+having count(employee_id) > 15
+
+
+--2b
+with t1 as (select sum(salary) ss, department_id 
+            from employees
+            group by department_id
+)
+select department_id, d.department_name, c.country_name, decode(t1.ss,null,0,t1.ss)
+from departments d
+join locations l on l.location_id = d.location_id
+join countries c on c.country_id = l.country_id
+left join t1 using(department_id)
+
